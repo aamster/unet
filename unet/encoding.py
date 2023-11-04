@@ -19,6 +19,7 @@ class Encoder(nn.Module):
             activation: Optional[str] = 'ReLU',
             initial_dilation: Optional[int] = None,
             dropout: float = 0,
+            kernel_size: int = 3
             ):
         super().__init__()
 
@@ -40,6 +41,7 @@ class Encoder(nn.Module):
                 activation=activation,
                 dilation=self.dilation,
                 dropout=dropout,
+                kernel_size=kernel_size
             )
             is_first_block = False
             self.encoding_blocks.append(encoding_block)
@@ -80,6 +82,7 @@ class EncodingBlock(nn.Module):
             activation: Optional[str] = 'ReLU',
             dilation: Optional[int] = None,
             dropout: float = 0,
+            kernel_size: int = 3
             ):
         super().__init__()
 
@@ -106,6 +109,7 @@ class EncodingBlock(nn.Module):
             activation=activation,
             dilation=dilation,
             dropout=dropout,
+            kernel_size=kernel_size
         )
 
         if dimensions in (1, 2):
@@ -122,6 +126,7 @@ class EncodingBlock(nn.Module):
             activation=activation,
             dilation=dilation,
             dropout=dropout,
+            kernel_size=kernel_size
         )
 
         if residual:

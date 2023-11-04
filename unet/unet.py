@@ -3,6 +3,8 @@
 """Main module."""
 
 from typing import Optional
+
+import torch
 import torch.nn as nn
 from .encoding import Encoder, EncodingBlock
 from .decoding import Decoder
@@ -30,6 +32,7 @@ class UNet(nn.Module):
             initial_dilation: Optional[int] = None,
             dropout: float = 0,
             monte_carlo_dropout: float = 0,
+            kernel_size: int = 3
             ):
         super().__init__()
         depth = num_encoding_blocks - 1
@@ -53,6 +56,7 @@ class UNet(nn.Module):
             activation=activation,
             initial_dilation=initial_dilation,
             dropout=dropout,
+            kernel_size=kernel_size
         )
 
         # Bottom (last encoding block)
@@ -75,6 +79,7 @@ class UNet(nn.Module):
             activation=activation,
             dilation=self.encoder.dilation,
             dropout=dropout,
+            kernel_size=kernel_size
         )
 
         # Decoder
@@ -98,6 +103,7 @@ class UNet(nn.Module):
             activation=activation,
             initial_dilation=self.encoder.dilation,
             dropout=dropout,
+            kernel_size=kernel_size
         )
 
         # Monte Carlo dropout
@@ -108,7 +114,7 @@ class UNet(nn.Module):
 
         # Classifier
         if dimensions in (1, 2):
-            in_channels = out_channels_first_layer
+            in_channels = out_channels_first_layer + 24
         elif dimensions == 3:
             in_channels = 2 * out_channels_first_layer
         self.classifier = ConvolutionalBlock(
@@ -116,12 +122,17 @@ class UNet(nn.Module):
             kernel_size=1, activation=None,
         )
 
-    def forward(self, x):
+    def forward(self, x, start_hour):
         skip_connections, encoding = self.encoder(x)
         encoding = self.bottom_block(encoding)
         x = self.decoder(skip_connections, encoding)
         if self.monte_carlo_layer is not None:
             x = self.monte_carlo_layer(x)
+
+        start_hour = nn.functional.one_hot(start_hour.long(), num_classes=24)
+        start_hour = start_hour.unsqueeze(2).repeat(1, 1, x.shape[-1])
+        x = torch.cat([x, start_hour], 1)
+
         return self.classifier(x)
 
 
