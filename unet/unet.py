@@ -122,16 +122,16 @@ class UNet(nn.Module):
             kernel_size=1, activation=None,
         )
 
-    def forward(self, x, start_hour):
+    def forward(self, x, timestamp_hour):
         skip_connections, encoding = self.encoder(x)
         encoding = self.bottom_block(encoding)
         x = self.decoder(skip_connections, encoding)
         if self.monte_carlo_layer is not None:
             x = self.monte_carlo_layer(x)
 
-        start_hour = nn.functional.one_hot(start_hour.long(), num_classes=24)
-        start_hour = start_hour.unsqueeze(2).repeat(1, 1, x.shape[-1])
-        x = torch.cat([x, start_hour], 1)
+        timestamp_hour = nn.functional.one_hot(timestamp_hour.long(), num_classes=24)
+        timestamp_hour = timestamp_hour.moveaxis(2, 1)
+        x = torch.cat([x, timestamp_hour], 1)
 
         return self.classifier(x)
 
