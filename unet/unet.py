@@ -114,7 +114,7 @@ class UNet(nn.Module):
 
         # Classifier
         if dimensions in (1, 2):
-            in_channels = out_channels_first_layer + 24
+            in_channels = out_channels_first_layer
         elif dimensions == 3:
             in_channels = 2 * out_channels_first_layer
         self.classifier = ConvolutionalBlock(
